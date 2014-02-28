@@ -32,59 +32,62 @@
 
   <body>
     <div class="site-wrapper">
-      <div class="site-wrapper-inner">
-        <div class="cover-container">
-          <div class="masthead clearfix">
-            <div class="inner">
-              <h3 class="masthead-brand">Pairwise Alignment</h3>
-			  <!-- Nav tabs -->
-              <ul class="nav masthead-nav" id="myTab">
-                <li class="active"><a href="#input" data-toggle="tab">Input</a></li>
-                <li><a href="#result" data-toggle="tab">Result</a></li>
-              </ul>
-            </div>
-          </div>
-
-	<!-- Tab panes -->
-	<div class="tab-content">
-	  <div class="tab-pane active" id="input">
-			<div class="inner cover">
-			  <p class="lead">Enter two sequences that should be pairwise aligned.</p>
-				<form class="form-horizontal">
-					<div class="form-group">
-						<label for="inputSeq1" class="control-label col-xs-2">Sequence 1</label>
-						<div class="col-xs-8">
-							<input type="text" class="form-control" id="inputSeq1" placeholder="e.g. ANNEALING">
-						</div>
-					</div>
-					<div class="form-group">
-						<label for="inputPassword" class="control-label col-xs-2">Sequence 2</label>
-						<div class="col-xs-8">
-							<input type="text" class="form-control" id="inputSeq2" placeholder="e.g. ANNUAL">
-						</div>
-					</div>
-				</form>
-			  
-			  <p class="lead">
-              <a onclick="compute();" href="#" class="btn btn-lg btn-default">Compute</a>
-              </p>
-        </div>
-	  </div>
-			
-
-	<div class="tab-pane" id="result">
-		<div class="inner cover">
-			<svg width="100%" height="100%" id="dpmat">
-			</svg>
-		</div>
-	</div>
-	</div>
-			
-	<div class="mastfoot">
-		<div class="inner">
-			<p>Alignment applet using <a href="http://getbootstrap.com">Bootstrap</a>, by <a href="https://twitter.com/david_weese">@david_weese</a>.</p>
-		</div>
-	</div>	
+        <div class="site-wrapper-inner">
+            <div class="cover-container">
+                <div class="masthead clearfix">
+                    <div class="inner">
+                        <h3 class="masthead-brand">Pairwise Alignment</h3>
+    
+                        <!-- Nav tabs -->
+                        <ul class="nav masthead-nav" id="myTab">
+                            <li class="active"><a href="#input" data-toggle="tab">Input</a></li>
+                            <li><a href="#result" data-toggle="tab">Result</a></li>
+                        </ul>
+                    </div>
+                </div>
+    
+                <!-- Tab panes -->
+                <div class="tab-content">
+                    
+                    <div class="tab-pane active" id="input">
+                        <div class="inner cover">
+                            <p class="lead">Enter two sequences that should be pairwise aligned.</p>
+                            <form class="form-horizontal">
+                                <div class="form-group">
+                                    <label for="inputSeq1" class="control-label col-xs-2">Sequence 1</label>
+                                    <div class="col-xs-8">
+                                        <input type="text" class="form-control" id="inputSeq1" placeholder="e.g. ANNEALING">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="inputPassword" class="control-label col-xs-2">Sequence 2</label>
+                                    <div class="col-xs-8">
+                                        <input type="text" class="form-control" id="inputSeq2" placeholder="e.g. ANNUAL">
+                                    </div>
+                                </div>
+                            </form>
+                            
+                            <p class="lead">
+                                <a onclick="compute();" href="#" class="btn btn-lg btn-default">Compute</a>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-pane" id="result">
+                        <div class="inner cover">
+                            <svg width="100%" height="100%" id="dpmat"></svg>
+                        </div>
+                    </div>
+                </div>
+                        
+                <div class="mastfoot">
+                    <div class="inner">
+                        <p>Alignment applet using <a href="http://getbootstrap.com">Bootstrap</a>, by <a href="https://twitter.com/david_weese">@david_weese</a>.</p>
+                    </div>
+                </div>	
+            </div>	
+        </div>	
+    </div>	
 			
     <!-- Bootstrap core JavaScript
     ================================================== -->
@@ -146,14 +149,11 @@
                 {
                     var m = mat[i-1][j-1];
                     if (s1[i-1] != s2[j-1])
-                    {
                         m = Math.min(m, mat[i][j-1], mat[i-1][j]) + 1
-                    }
                     mat[i][j] = m;
                     
-                    var rect = s.rect(i*30+1,    j*30+1,    28, 28, 1.5, 1.5),
+                    var rect = s.rect(i*30+1,  j*30+1,  28, 28, 1.5, 1.5),
                         val  = s.text(i*30+15, j*30+20, m.toString());
-                    //rect.attr({class: 'dpcell', fill:"#438"});
                     rect.attr({class: 'dpcell', fill:Snap.hsl(0.4-(m/maxlen)*.4,0.3+(m/maxlen)*0.4,0.45)});
                     val.attr({class: 'dpval'});
                     s.g(rect, val);
