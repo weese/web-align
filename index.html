@@ -10,10 +10,10 @@
     <title>Pairwise Alignment</title>
 
     <!-- Bootstrap core CSS -->
-    <link href="bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Custom styles for this template -->
-    <link href="bootstrap/cover.css" rel="stylesheet">
+    <link href="css/cover.css" rel="stylesheet">
     <style type="text/css">
         .dpval {
             stroke: none;
@@ -25,8 +25,6 @@
             fill: #666;
             stroke: none; }
     </style>
-
-	<script src="snap/snap.svg-min.js"></script>
   </head>
 
   <body>
@@ -81,7 +79,7 @@
                         
                 <div class="mastfoot">
                     <div class="inner">
-                        <p>Alignment applet using <a href="http://getbootstrap.com">Bootstrap</a> and <a href="http://snapsvg.io">Snap.svg</a>, by <a href="https://twitter.com/david_weese">@david_weese</a>.</p>
+                        <p>Alignment applet using <a href="http://getbootstrap.com">Bootstrap</a> and <a href="http://d3js.org">D3.js</a>, by <a href="https://twitter.com/david_weese">@david_weese</a>.</p>
                     </div>
                 </div>	
             </div>	
@@ -92,7 +90,8 @@
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-    <script src="bootstrap/bootstrap.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+	<script src="js/d3.min.js"></script>
 
 	<script>
 		$('#myTab a').click(function (e)
@@ -107,12 +106,12 @@
             var s2 = inputSeq2.value;
             if (!s1.length) s1 = "ANNEALING";
             if (!s2.length) s2 = "ANNUAL";
+            //if (!s1.length) s1 = "AN";
+            //if (!s2.length) s2 = "EN";
             
-            var svg = document.getElementById('dpmat');
-            svg.setAttribute('viewBox', '-32 -32 ' + (s1.length * 30 + 94) + ' ' + (s2.length * 30 + 94));
+            var svg = d3.select('#dpmat');
+            svg.attr('viewBox', '-32 -32 ' + (s1.length * 30 + 94) + ' ' + (s2.length * 30 + 94));
 
-            var s = Snap("#dpmat");
-            s.clear();
             var maxlen = Math.max(s1.length, s2.length)
 
             // Initialization
@@ -121,25 +120,57 @@
             {
                 mat[i] = new Array(s2.length + 1);
                 mat[i][0] = i;
-                var rect = s.rect(i*30+1,    1, 28, 28, 1.5, 1.5),
-                    val  = s.text(i*30+15,  20, i.toString()),
-                    chr  = s.text(i*30+30, -10, s1[i]);
-                rect.attr({class: 'dpinitcell'});
-                val.attr({class: 'dpval'});
-                chr.attr({class: 'dpval'});
-                s.g(rect, val);
+                var g = svg.append("g")
+                           .attr("transform", 
+                                 "translate(" + (i*30+15) + ",15)");
+                var grp = g.append("g")
+                           .attr("transform", "scale(0)");
+                grp.append("rect")
+                   .attr("x", -14)
+                   .attr("y", -14)
+                   .attr("width", 28)
+                   .attr("height", 28)
+                   .attr("rx", 1.5)
+                   .attr("ry", 1.5)
+                   .attr("class", "dpinitcell");
+                grp.append("text")
+                   .attr("x", 0)
+                   .attr("y", 5)
+                   .text(i.toString())
+                   .attr("class", "dpval");
+                svg.append("text")
+                   .attr("x", i*30+30)
+                   .attr("y", -10)
+                   .text(s1[i])
+                   .attr("class", "dpval");
             }
             
             for (var j = 0; j <= s2.length; ++j)
             {
                 mat[0][j] = j;
-                var rect = s.rect(1,   j*30+1,    28, 28, 1.5, 1.5),
-                    val  = s.text(15,  j*30+20, j.toString()),
-                    chr  = s.text(-15, j*30+35, s2[j]);
-                rect.attr({class: 'dpinitcell'});
-                val.attr({class: 'dpval'});
-                chr.attr({class: 'dpval'});
-                s.g(rect, val);
+                var g = svg.append("g")
+                           .attr("transform", 
+                                 "translate(15," + (j*30+15) + ")");
+                var grp = g.append("g")
+                           .attr("transform", "scale(0)");
+                grp.append("rect")
+                   .attr("x", -14)
+                   .attr("y", -14)
+                   .attr("width", 28)
+                   .attr("height", 28)
+                   .attr("rx", 1.5)
+                   .attr("ry", 1.5)
+                   .attr("class", "dpinitcell");
+                grp.append("text")
+                   .attr("x", 0)
+                   .attr("y", 5)
+                   .text(j.toString())
+                   .attr("class", "dpval");
+                svg.append("text")
+                   .attr("x", -15)
+                   .attr("y", j*30+35)
+                   .text(s2[j])
+                   .attr("class", "dpval");
             }
 
             // Recursion
@@ -150,21 +181,39 @@
                     if (s1[i-1] != s2[j-1])
                         m = Math.min(m, mat[i][j-1], mat[i-1][j]) + 1
                     mat[i][j] = m;
-                    
-                    var rect = s.rect(i*30+1,  j*30+1,  28, 28, 1.5, 1.5),
-                        val  = s.text(i*30+15, j*30+20, m.toString());
-                    rect.attr({class: 'dpcell', fill:Snap.hsl(0.4-(m/maxlen)*.4,0.3+(m/maxlen)*0.4,0.45)});
-                    val.attr({class: 'dpval'});
-                    s.g(rect, val);
+
+                    var g = svg.append("g")
+                               .attr("transform", 
+                                     "translate(" + (i*30+15) + "," + (j*30+15) + ")");
+                    var grp = g.append("g")
+                               .attr("transform", "scale(0)")
+                               .attr("antidiag", i+j);
+                    grp.append("rect")
+                       .attr("x", -14)
+                       .attr("y", -14)
+                       .attr("width", 28)
+                       .attr("height", 28)
+                       .attr("rx", 1.5)
+                       .attr("ry", 1.5)
+                       .attr("fill", d3.hsl(144-(m/maxlen)*144,0.3+(m/maxlen)*0.4,0.45))
+                       .attr("class", "dpcell");
+                    grp.append("text")
+                       .attr("x", 0)
+                       .attr("y", 5)
+                       .text(m.toString())
+                       .attr("class", "dpval");
                 }
 		}
-			
+
 		function compute()
 		{
 			$('#resulttab').tab('show');
 			align();
-		}
-
+            d3.selectAll("g g").transition().duration(300)
+                .attrTween("transform", function(d, i, a) {
+                    return d3.interpolateString(a, 'scale(1)');
+                });
+        }
 	</script> 
   </body>
 </html>
