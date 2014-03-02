@@ -29,9 +29,6 @@
             text-anchor:middle }
         .dpcell {
             stroke: none; }
-        .dpinitcell {
-            fill: #666;
-            stroke: none; }
     </style>
   </head>
 
@@ -191,37 +188,39 @@
                             .data(function(d) {return d;});
                             
             // update
-            cells.selectAll("g rect")
-                 .attr("fill", function(d, j) { return colorFunc(d, parseInt(d3.select(this.parentNode.parentNode).attr("rowId")), j); })
-            cells.selectAll("g text")
-                 .text(function(d, i) { return d.toString() })
-
+            cells.select("text")
+                 .text(function(d, i) { return d.toString(); });
+            cells.select("rect")
+                 .transition()
+                 .duration(1000)
+                 .attrTween("fill", function(d, j, a) { return d3.interpolateRgb(a, colorFunc(d, parseInt(d3.select(this.parentNode.parentNode).attr("rowId")), j)); });
+            
             // insert
             var cell = cells.enter().append("g")
-                            .attr("class", "cell")
-                            .attr("transform", function(d, j) { return "translate(" + (j*30+15) + ",0) scale(0)"; })
-                            .transition()
-                            .delay(function(d, j) { return (parseInt(d3.select(this.parentNode).attr("rowId")) + j)*500/maxlen; })
-                            .duration(500)
-                            .attrTween("transform", function(d, j, a) { 
-                                return function(e) { 
-                                    return"translate(" + (j*30+15) + ",0) scale(" + e + ")"; 
-                                }});
+            cell.attr("class", "cell")
+                .attr("transform", function(d, j) { return "translate(" + (j*30+15) + ",0) scale(0)"; })
+                .transition()
+                .delay(function(d, j) { return (parseInt(d3.select(this.parentNode).attr("rowId")) + j)*500/maxlen; })
+                .duration(500)
+                .attrTween("transform", function(d, j, a) { 
+                    return function(e) { 
+                        return"translate(" + (j*30+15) + ",0) scale(" + e + ")"; 
+                    }});
 
-            cells.append("rect")
-                 .attr("x", -14)
-                 .attr("y", -14)
-                 .attr("width", 28)
-                 .attr("height", 28)
-                 .attr("rx", 1.5)
-                 .attr("ry", 1.5)
-                 .attr("fill", function(d, j) { return colorFunc(d, parseInt(d3.select(this.parentNode.parentNode).attr("rowId")), j); })
-                 .attr("class", "dpcell");
-            cells.append("text")
-                 .attr("x", 0)
-                 .attr("y", 5)
-                 .text(function(d, i) { return d.toString() })
-                 .attr("class", "dpval");
+            cell.append("rect")
+                .attr("x", -14)
+                .attr("y", -14)
+                .attr("width", 28)
+                .attr("height", 28)
+                .attr("rx", 1.5)
+                .attr("ry", 1.5)
+                .attr("fill", function(d, j) { return colorFunc(d, parseInt(d3.select(this.parentNode.parentNode).attr("rowId")), j); })
+                .attr("class", "dpcell");
+            cell.append("text")
+                .attr("x", 0)
+                .attr("y", 5)
+                .text(function(d, i) { return d.toString() })
+                .attr("class", "dpval");
             
             // delete
             cells.exit()
