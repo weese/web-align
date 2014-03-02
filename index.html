@@ -15,6 +15,14 @@
     <!-- Custom styles for this template -->
     <link href="css/cover.css" rel="stylesheet">
     <style type="text/css">
+        .hlabel {
+            stroke: none;
+            fill: #fff;
+            text-anchor:middle }
+        .vlabel {
+            stroke: none;
+            fill: #fff;
+            text-anchor:middle }
         .dpval {
             stroke: none;
             fill: #fff;
@@ -100,120 +108,155 @@
 		  $(this).tab('show')
 		})
 		
-		function align()
+        function updateLabels(s1, s2)
+        {
+            var svg = d3.select('#dpmat');
+            var charsH = svg.selectAll("text.hlabel")
+                            .data(s1)
+                            .text(function(d, j) { return s1[j]; });
+                         
+            charsH.enter().append("text")
+                          .attr("class", "hlabel")
+                          .attr("x", function(d, j) { return j*30+30; })
+                          .attr("y", "-10")
+                          .text(function(d, j) { return s1[j]; });
+            charsH.exit().remove();
+
+            var charsV = svg.selectAll("text.vlabel")
+                            .data(s2)
+                            .text(function(d, i) { return s2[i]; });
+
+            charsV.enter().append("text")
+                          .attr("class", "vlabel")
+                          .attr("x", "-15")
+                          .attr("y", function(d, i) { return i*30+35; })
+                          .text(function(d, i) { return s2[i]; });
+            charsV.exit().remove();
+        }
+            
+		function align(s1, s2)
+		{
+            // Initialization
+            var mat = new Array(s2.length + 1);
+            for (var i = 0; i <= s2.length; ++i)
+            {
+                mat[i] = new Array(s1.length + 1);
+                mat[i][0] = i;
+            }
+            
+            for (var j = 0; j <= s1.length; ++j)
+                mat[0][j] = j;
+
+            // Recursion
+            for (var i = 1; i <= s2.length; ++i)
+                for (var j = 1; j <= s1.length; ++j)
+                {
+                    var m = mat[i-1][j-1];
+                    if (s2[i-1] != s1[j-1])
+                        m = Math.min(m, mat[i][j-1], mat[i-1][j]) + 1
+                    mat[i][j] = m;
+                }
+                
+            return mat;
+        }
+        
+        function update(mat, colorFunc)
+        {
+            var maxlen = Math.max(mat.length, mat[0].length);
+            var svg = d3.select('#dpmat');
+
+            // update row
+            var rows = svg.selectAll("g.row")
+                          .data(mat);
+            
+            // insert row
+            rows.enter().append("g")
+                        .attr("class", "row")
+                        .attr("rowId", function(d, i) { return i })
+                        .attr("transform", function(d, i) { return "translate(0," + (i*30+15) + ")"; });
+
+            // delete row
+            rows.exit()
+                .selectAll("g")
+                .transition().duration(1000)
+                .attrTween("transform", function(d, i, a) { 
+                    return function(e) { 
+                        return"translate(" + (i*30+15) + ",0) scale(" + (1-e) + ")"; 
+                    }})
+                .remove();
+
+
+
+            var cells = rows.selectAll("g.cell")
+                            .data(function(d) {return d;});
+                            
+            // update
+            cells.selectAll("g rect")
+                 .attr("fill", function(d, j) { return colorFunc(d, parseInt(d3.select(this.parentNode.parentNode).attr("rowId")), j); })
+            cells.selectAll("g text")
+                 .text(function(d, i) { return d.toString() })
+
+            // insert
+            var cell = cells.enter().append("g")
+                            .attr("class", "cell")
+                            .attr("transform", function(d, j) { return "translate(" + (j*30+15) + ",0) scale(0)"; })
+                            .transition()
+                            .delay(function(d, j) { return (parseInt(d3.select(this.parentNode).attr("rowId")) + j)*500/maxlen; })
+                            .duration(500)
+                            .attrTween("transform", function(d, j, a) { 
+                                return function(e) { 
+                                    return"translate(" + (j*30+15) + ",0) scale(" + e + ")"; 
+                                }});
+
+            cells.append("rect")
+                 .attr("x", -14)
+                 .attr("y", -14)
+                 .attr("width", 28)
+                 .attr("height", 28)
+                 .attr("rx", 1.5)
+                 .attr("ry", 1.5)
+                 .attr("fill", function(d, j) { return colorFunc(d, parseInt(d3.select(this.parentNode.parentNode).attr("rowId")), j); })
+                 .attr("class", "dpcell");
+            cells.append("text")
+                 .attr("x", 0)
+                 .attr("y", 5)
+                 .text(function(d, i) { return d.toString() })
+                 .attr("class", "dpval");
+            
+            // delete
+            cells.exit()
+                .transition().duration(1000)
+                .attrTween("transform", function(d, j, a) { 
+                    return function(e) { 
+                        return"translate(" + (j*30+15) + ",0) scale(" + (1-e) + ")"; 
+                    }})
+                .remove();
+		}
+
+		function compute()
 		{
             var s1 = inputSeq1.value;
             var s2 = inputSeq2.value;
             if (!s1.length) s1 = "ANNEALING";
             if (!s2.length) s2 = "ANNUAL";
-            //if (!s1.length) s1 = "AN";
-            //if (!s2.length) s2 = "EN";
             
             var svg = d3.select('#dpmat');
             svg.attr('viewBox', '-32 -32 ' + (s1.length * 30 + 94) + ' ' + (s2.length * 30 + 94));
+            updateLabels(s1, s2);
 
-            var maxlen = Math.max(s1.length, s2.length)
-
-            // Initialization
-            var mat = new Array(s1.length + 1);
-            for (var i = 0; i <= s1.length; ++i)
-            {
-                mat[i] = new Array(s2.length + 1);
-                mat[i][0] = i;
-                var g = svg.append("g")
-                           .attr("transform", 
-                                 "translate(" + (i*30+15) + ",15)");
-                var grp = g.append("g")
-                           .attr("transform", "scale(0)");
-                grp.append("rect")
-                   .attr("x", -14)
-                   .attr("y", -14)
-                   .attr("width", 28)
-                   .attr("height", 28)
-                   .attr("rx", 1.5)
-                   .attr("ry", 1.5)
-                   .attr("class", "dpinitcell");
-                grp.append("text")
-                   .attr("x", 0)
-                   .attr("y", 5)
-                   .text(i.toString())
-                   .attr("class", "dpval");
-                svg.append("text")
-                   .attr("x", i*30+30)
-                   .attr("y", -10)
-                   .text(s1[i])
-                   .attr("class", "dpval");
-            }
-            
-            for (var j = 0; j <= s2.length; ++j)
-            {
-                mat[0][j] = j;
-                var g = svg.append("g")
-                           .attr("transform", 
-                                 "translate(15," + (j*30+15) + ")");
-                var grp = g.append("g")
-                           .attr("transform", "scale(0)");
-                grp.append("rect")
-                   .attr("x", -14)
-                   .attr("y", -14)
-                   .attr("width", 28)
-                   .attr("height", 28)
-                   .attr("rx", 1.5)
-                   .attr("ry", 1.5)
-                   .attr("class", "dpinitcell");
-                grp.append("text")
-                   .attr("x", 0)
-                   .attr("y", 5)
-                   .text(j.toString())
-                   .attr("class", "dpval");
-                svg.append("text")
-                   .attr("x", -15)
-                   .attr("y", j*30+35)
-                   .text(s2[j])
-                   .attr("class", "dpval");
-            }
-
-            // Recursion
-            for (var i = 1; i <= s1.length; ++i)
-                for (var j = 1; j <= s2.length; ++j)
-                {
-                    var m = mat[i-1][j-1];
-                    if (s1[i-1] != s2[j-1])
-                        m = Math.min(m, mat[i][j-1], mat[i-1][j]) + 1
-                    mat[i][j] = m;
-
-                    var g = svg.append("g")
-                               .attr("transform", 
-                                     "translate(" + (i*30+15) + "," + (j*30+15) + ")");
-                    var grp = g.append("g")
-                               .attr("transform", "scale(0)")
-                               .attr("antidiag", i+j);
-                    grp.append("rect")
-                       .attr("x", -14)
-                       .attr("y", -14)
-                       .attr("width", 28)
-                       .attr("height", 28)
-                       .attr("rx", 1.5)
-                       .attr("ry", 1.5)
-                       .attr("fill", d3.hsl(144-(m/maxlen)*144,0.3+(m/maxlen)*0.4,0.45))
-                       .attr("class", "dpcell");
-                    grp.append("text")
-                       .attr("x", 0)
-                       .attr("y", 5)
-                       .text(m.toString())
-                       .attr("class", "dpval");
-                }
-		}
-
-		function compute()
-		{
 			$('#resulttab').tab('show');
-			align();
-            d3.selectAll("g g").transition().duration(300)
-                .attrTween("transform", function(d, i, a) {
-                    return d3.interpolateString(a, 'scale(1)');
-                });
+
+            var maxlen = Math.max(s1.length, s2.length);
+			mat = align(s1, s2);
+			update(mat, function(d, i, j)
+                        {
+                            if (i == 0 || j == 0)
+                                return d3.rgb(0x60,0x60,0x60);
+                            else
+                                return d3.hsl(144-(d/maxlen)*144,0.3+(d/maxlen)*0.4,0.45);
+                        });
         }
+        
 	</script> 
   </body>
 </html>
