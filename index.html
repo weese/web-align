@@ -27,8 +27,13 @@
             stroke: none;
             fill: #fff;
             text-anchor:middle }
-        .dpcell {
-            stroke: none; }
+        .matcell:hover {
+            fill: orange; }
+        .dptrace {
+            stroke: lightgray;
+            stroke-width: 15;
+            stroke-linecap: round;
+            fill: none; };
     </style>
   </head>
 
@@ -99,15 +104,15 @@
 	<script src="js/d3.min.js"></script>
 
 	<script>
-		$('#myTab a').click(function (e)
+		$("#myTab a").click(function (e)
 		{
 		  e.preventDefault()
-		  $(this).tab('show')
+		  $(this).tab("show")
 		})
 		
         function updateLabels(s1, s2)
         {
-            var svg = d3.select('#dpmat');
+            var svg = d3.select("#dpmat");
             var charsH = svg.selectAll("text.hlabel")
                             .data(s1)
                             .text(function(d, j) { return s1[j]; });
@@ -131,44 +136,70 @@
             charsV.exit().remove();
         }
             
-		function align(s1, s2)
+		function dpAlign(s1, s2)
 		{
             // Initialization
             var mat = new Array(s2.length + 1);
+            var trace = new Array(s2.length + 1);
             for (var i = 0; i <= s2.length; ++i)
             {
-                mat[i] = new Array(s1.length + 1);
-                mat[i][0] = i;
+                mat[i] = new Uint16Array(s1.length + 1);
+                trace[i] = new Int8Array(s1.length + 1);
             }
             
+            for (var i = 0; i <= s2.length; ++i)
+            {
+                mat[i][0] = i;
+                trace[i][0] = 2;
+            }
+
             for (var j = 0; j <= s1.length; ++j)
+            {
                 mat[0][j] = j;
+                trace[0][j] = 1;
+            }
+            
+            trace[0][0] = -1;
 
             // Recursion
             for (var i = 1; i <= s2.length; ++i)
                 for (var j = 1; j <= s1.length; ++j)
                 {
-                    var m = mat[i-1][j-1];
+                    var d = mat[i-1][j-1];
                     if (s2[i-1] != s1[j-1])
-                        m = Math.min(m, mat[i][j-1], mat[i-1][j]) + 1
+                    {
+                        m = Math.min(d, mat[i][j-1], mat[i-1][j])
+                        if (m == d)
+                            trace[i][j] = 0;
+                        else if (m == mat[i][j-1])
+                            trace[i][j] = 1;
+                        else
+                            trace[i][j] = 2;
+                        ++m;
+                    }
+                    else
+					{
+                        trace[i][j] = 0;
+						m = d;
+					}
                     mat[i][j] = m;
                 }
                 
-            return mat;
+            return {mat:mat, trace:trace};
         }
         
         function update(mat, colorFunc)
         {
             var maxlen = Math.max(mat.length, mat[0].length);
-            var svg = d3.select('#dpmat');
+            var svg = d3.select("#dpmat");
 
             // update row
-            var rows = svg.selectAll("g.row")
+            var rows = svg.selectAll("g.matrow")
                           .data(mat);
             
             // insert row
             rows.enter().append("g")
-                        .attr("class", "row")
+                        .attr("class", "matrow")
                         .attr("rowId", function(d, i) { return i })
                         .attr("transform", function(d, i) { return "translate(0," + (i*30+15) + ")"; });
 
@@ -178,33 +209,34 @@
                 .transition().duration(1000)
                 .attrTween("transform", function(d, i, a) { 
                     return function(e) { 
-                        return"translate(" + (i*30+15) + ",0) scale(" + (1-e) + ")"; 
+                        return "translate(" + (i*30+15) + ",0) scale(" + (1-e) + ")"; 
                     }})
                 .remove();
 
 
 
-            var cells = rows.selectAll("g.cell")
+            var cells = rows.selectAll("g.matcell")
                             .data(function(d) {return d;});
                             
             // update
+            cells.transition()
+                 .duration(1000)
+                 .attrTween("fill", function(d, j, a) { return d3.interpolateRgb(a, colorFunc(d, parseInt(d3.select(this.parentNode).attr("rowId")), j)); });
             cells.select("text")
                  .text(function(d, i) { return d.toString(); });
-            cells.select("rect")
-                 .transition()
-                 .duration(1000)
-                 .attrTween("fill", function(d, j, a) { return d3.interpolateRgb(a, colorFunc(d, parseInt(d3.select(this.parentNode.parentNode).attr("rowId")), j)); });
             
             // insert
             var cell = cells.enter().append("g")
-            cell.attr("class", "cell")
+            cell.attr("class", "matcell")
+                .attr("colId", function(d, j) { return j })
                 .attr("transform", function(d, j) { return "translate(" + (j*30+15) + ",0) scale(0)"; })
+                .attr("fill", function(d, j) { return colorFunc(d, parseInt(d3.select(this.parentNode).attr("rowId")), j); })
                 .transition()
                 .delay(function(d, j) { return (parseInt(d3.select(this.parentNode).attr("rowId")) + j)*500/maxlen; })
                 .duration(500)
                 .attrTween("transform", function(d, j, a) { 
                     return function(e) { 
-                        return"translate(" + (j*30+15) + ",0) scale(" + e + ")"; 
+                        return "translate(" + (j*30+15) + ",0) scale(" + e + ")"; 
                     }});
 
             cell.append("rect")
@@ -214,8 +246,6 @@
                 .attr("height", 28)
                 .attr("rx", 1.5)
                 .attr("ry", 1.5)
-                .attr("fill", function(d, j) { return colorFunc(d, parseInt(d3.select(this.parentNode.parentNode).attr("rowId")), j); })
-                .attr("class", "dpcell");
             cell.append("text")
                 .attr("x", 0)
                 .attr("y", 5)
@@ -227,11 +257,60 @@
                 .transition().duration(1000)
                 .attrTween("transform", function(d, j, a) { 
                     return function(e) { 
-                        return"translate(" + (j*30+15) + ",0) scale(" + (1-e) + ")"; 
+                        return "translate(" + (j*30+15) + ",0) scale(" + (1-e) + ")"; 
                     }})
                 .remove();
 		}
 
+        function drawTrace(i, j, trace)
+        {
+            points = [{"x":j*30+15, "y":i*30+15}];
+            while (trace[i][j] != -1)
+            {
+                console.log(i+"_"+j)
+                if (trace[i][j] == 0)
+                {
+                    --i;
+                    --j;
+                }
+                else 
+                {
+                    if (trace[i][j] == 1)
+                        --j;
+                    else
+                        --i;
+                }
+                points.push({"x":j*30+15, "y":i*30+15});
+            }
+            
+            var lineFunction = d3.svg.line()
+                                        .x(function(d) { return d.x; })
+                                        .y(function(d) { return d.y; })
+                                        .interpolate("linear");
+
+            var svg = d3.select("#dpmat");
+            svg.append("path")
+               .attr("class", "dptrace")
+               .attr("d", lineFunction(points))
+               .attr("stroke-opacity", "0")
+               .on("mouseup", function (d, j) {
+                   svg.selectAll("path.dptrace")
+                      .transition()
+                      .duration(300)
+                      .attrTween("stroke-opacity", function(d, j, a) { 
+                          return function(e) { 
+                              return (1 - e) * .7; 
+                          }})
+                      .remove();
+               })
+               .transition()
+               .duration(500)
+               .attrTween("stroke-opacity", function(d, j, a) { 
+                   return function(e) { 
+                       return e * .7; 
+                   }});
+        }
+        
 		function compute()
 		{
             var s1 = inputSeq1.value;
@@ -239,21 +318,39 @@
             if (!s1.length) s1 = "ANNEALING";
             if (!s2.length) s2 = "ANNUAL";
             
-            var svg = d3.select('#dpmat');
-            svg.attr('viewBox', '-32 -32 ' + (s1.length * 30 + 94) + ' ' + (s2.length * 30 + 94));
+            var svg = d3.select("#dpmat");
+            svg.attr("viewBox", "-32 -32 " + (s1.length * 30 + 94) + " " + (s2.length * 30 + 94));
             updateLabels(s1, s2);
 
-			$('#resulttab').tab('show');
+			$("#resulttab").tab("show");
 
             var maxlen = Math.max(s1.length, s2.length);
-			mat = align(s1, s2);
-			update(mat, function(d, i, j)
+			align = dpAlign(s1, s2);
+			update(align.mat, function(d, i, j)
                         {
                             if (i == 0 || j == 0)
                                 return d3.rgb(0x60,0x60,0x60);
                             else
                                 return d3.hsl(144-(d/maxlen)*144,0.3+(d/maxlen)*0.4,0.45);
                         });
+
+            var trace = align.trace;
+            svg.selectAll("g.matrow")
+                .selectAll("g.matcell")
+                .on("mousedown", function (d, j) {
+                    var i = parseInt(d3.select(this.parentNode).attr("rowId"));
+                    drawTrace(i, j, trace);
+                })
+                .on("mouseup", function (d, j) {
+                    svg.selectAll("path.dptrace")
+                       .transition()
+                       .duration(300)
+                       .attrTween("stroke-opacity", function(d, j, a) { 
+                           return function(e) { 
+                               return (1 - e) * .7; 
+                           }})
+                       .remove();
+                });
         }
         
 	</script> 
