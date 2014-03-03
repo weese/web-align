@@ -23,7 +23,7 @@
             stroke: none;
             fill: #fff;
             text-anchor:middle }
-        .dpval {
+        .matval {
             stroke: none;
             fill: #fff;
             text-anchor:middle }
@@ -250,7 +250,7 @@
                 .attr("x", 0)
                 .attr("y", 5)
                 .text(function(d, i) { return d.toString() })
-                .attr("class", "dpval");
+                .attr("class", "matval");
             
             // delete
             cells.exit()
@@ -261,11 +261,10 @@
                     }})
                 .remove();
 		}
-
-        function drawTrace(i, j, trace, s1, s2)
-        {
-            var a1, a2;
-            points = [{"x":j*30+15, "y":i*30+15}];
+		
+		function getAlignment(i, j, trace, s1, s2)
+		{
+            var a1 = [], a2 = [];
             while (trace[i][j] != -1)
             {
                 if (trace[i][j] == 0)
@@ -290,11 +289,34 @@
                         a2.push(s2[i]);
                     }
                 }
+            }
+            return {a1:a1.reverse().join(""), a2:a2.reverse().join("")};
+		}
+
+        function drawTrace(i, j, trace)
+        {
+            points = [{"x":j*30+15, "y":i*30+15}];
+            while (trace[i][j] != -1)
+            {
+                if (trace[i][j] == 0)
+                {
+                    --i;
+                    --j;
+                }
+                else 
+                {
+                    if (trace[i][j] == 1)
+                    {
+                        --j;
+                    }
+                    else
+                    {
+                        --i;
+                    }
+                }
                 points.push({"x":j*30+15, "y":i*30+15});
             }
-            a1 = a1.split("").reverse().join("");
-            a2 = a2.split("").reverse().join("");
-            
+        
             var lineFunction = d3.svg.line()
                                         .x(function(d) { return d.x; })
                                         .y(function(d) { return d.y; })
@@ -363,7 +385,7 @@
                                return (1 - e) * .7; 
                            }})
                        .remove();
-                });
+                })
         }
         
 	</script> 
