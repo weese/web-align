@@ -262,26 +262,38 @@
                 .remove();
 		}
 
-        function drawTrace(i, j, trace)
+        function drawTrace(i, j, trace, s1, s2)
         {
+            var a1, a2;
             points = [{"x":j*30+15, "y":i*30+15}];
             while (trace[i][j] != -1)
             {
-                console.log(i+"_"+j)
                 if (trace[i][j] == 0)
                 {
                     --i;
                     --j;
+                    a1.push(s1[j]);
+                    a2.push(s2[i]);
                 }
                 else 
                 {
                     if (trace[i][j] == 1)
+                    {
                         --j;
+                        a1.push(s1[j]);
+                        a2.push("-");
+                    }
                     else
+                    {
                         --i;
+                        a1.push("-");
+                        a2.push(s2[i]);
+                    }
                 }
                 points.push({"x":j*30+15, "y":i*30+15});
             }
+            a1 = a1.split("").reverse().join("");
+            a2 = a2.split("").reverse().join("");
             
             var lineFunction = d3.svg.line()
                                         .x(function(d) { return d.x; })
@@ -309,6 +321,7 @@
                    return function(e) { 
                        return e * .7; 
                    }});
+               
         }
         
 		function compute()
@@ -339,7 +352,7 @@
                 .selectAll("g.matcell")
                 .on("mousedown", function (d, j) {
                     var i = parseInt(d3.select(this.parentNode).attr("rowId"));
-                    drawTrace(i, j, trace);
+                    drawTrace(i, j, trace, s1, s2);
                 })
                 .on("mouseup", function (d, j) {
                     svg.selectAll("path.dptrace")
