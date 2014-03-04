@@ -91,25 +91,25 @@
                     <div class="inner">
                         <p>Alignment applet using <a href="http://getbootstrap.com">Bootstrap</a> and <a href="http://d3js.org">D3.js</a>, by <a href="https://twitter.com/david_weese">@david_weese</a>.</p>
                     </div>
-                </div>	
-            </div>	
-        </div>	
-    </div>	
-			
+                </div>    
+            </div>    
+        </div>    
+    </div>    
+            
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
-	<script src="js/d3.min.js"></script>
+    <script src="js/d3.min.js"></script>
 
-	<script>
-		$("#myTab a").click(function (e)
-		{
-		  e.preventDefault()
-		  $(this).tab("show")
-		})
-		
+    <script>
+        $("#myTab a").click(function (e)
+        {
+          e.preventDefault()
+          $(this).tab("show")
+        })
+        
         function updateLabels(s1, s2)
         {
             var svg = d3.select("#dpmat");
@@ -136,8 +136,8 @@
             charsV.exit().remove();
         }
             
-		function dpAlign(s1, s2)
-		{
+        function dpAlign(s1, s2)
+        {
             // Initialization
             var mat = new Array(s2.length + 1);
             var trace = new Array(s2.length + 1);
@@ -178,10 +178,10 @@
                         ++m;
                     }
                     else
-					{
+                    {
                         trace[i][j] = 0;
-						m = d;
-					}
+                        m = d;
+                    }
                     mat[i][j] = m;
                 }
                 
@@ -260,10 +260,10 @@
                         return "translate(" + (j*30+15) + ",0) scale(" + (1-e) + ")"; 
                     }})
                 .remove();
-		}
-		
-		function getAlignment(i, j, trace, s1, s2)
-		{
+        }
+        
+        function getAlignment(i, j, trace, s1, s2)
+        {
             var a1 = [], a2 = [];
             while (trace[i][j] != -1)
             {
@@ -291,7 +291,7 @@
                 }
             }
             return {a1:a1.reverse().join(""), a2:a2.reverse().join("")};
-		}
+        }
 
         function drawTrace(i, j, trace)
         {
@@ -346,8 +346,8 @@
                
         }
         
-		function compute()
-		{
+        function compute()
+        {
             var s1 = inputSeq1.value;
             var s2 = inputSeq2.value;
             if (!s1.length) s1 = "ANNEALING";
@@ -357,11 +357,11 @@
             svg.attr("viewBox", "-32 -32 " + (s1.length * 30 + 94) + " " + (s2.length * 30 + 94));
             updateLabels(s1, s2);
 
-			$("#resulttab").tab("show");
+            $("#resulttab").tab("show");
 
             var maxlen = Math.max(s1.length, s2.length);
-			align = dpAlign(s1, s2);
-			update(align.mat, function(d, i, j)
+            align = dpAlign(s1, s2);
+            update(align.mat, function(d, i, j)
                         {
                             if (i == 0 || j == 0)
                                 return d3.rgb(0x60,0x60,0x60);
@@ -388,6 +388,6 @@
                 })
         }
         
-	</script> 
+    </script> 
   </body>
 </html>
