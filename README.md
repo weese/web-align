@@ -10,7 +10,7 @@ and outputs the whole DP matrix. Each matrix cell is clickable and shows the opt
 DEMO
 ----
 
-For a live demo click [here](http://htmlpreview.github.io/?http://raw.github.com/weese/web-align/master/index.html).
+For a live demo click [here](http://weese.github.io/web-align).
 
 
 This is just a test of the D3 API. Currently, only edit distance is supported. Maybe I will add support for arbitrary costs and an SVG/PDF exporter.
