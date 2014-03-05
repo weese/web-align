@@ -17,18 +17,25 @@
     <style type="text/css">
         .hlabel {
             stroke: none;
-            fill: #fff;
+            fill: white;
             text-anchor:middle }
         .vlabel {
             stroke: none;
-            fill: #fff;
+            fill: white;
             text-anchor:middle }
         .matval {
             stroke: none;
-            fill: #fff;
+            fill: white;
             text-anchor:middle }
         .matcell:hover {
             fill: orange; }
+        .mattooltip {
+            stroke: none;
+            fill: white;
+            fill-opacity: 0;
+            font-family:monospace;
+            font-weight:bold;
+            text-anchor:middle }
         .dptrace {
             stroke: lightgray;
             stroke-width: 15;
@@ -306,13 +313,9 @@
                 else 
                 {
                     if (trace[i][j] == 1)
-                    {
                         --j;
-                    }
                     else
-                    {
                         --i;
-                    }
                 }
                 points.push({"x":j*30+15, "y":i*30+15});
             }
@@ -331,15 +334,23 @@
                    svg.selectAll("path.dptrace")
                       .transition()
                       .duration(300)
-                      .attrTween("stroke-opacity", function(d, j, a) { 
-                          return function(e) { 
+                      .styleTween("stroke-opacity", function(d, j, a) { 
+                          return function(e) {
                               return (1 - e) * .7; 
                           }})
                       .remove();
+                    svg.selectAll("text.mattooltip")
+                       .transition()
+                       .duration(300)
+                       .styleTween("fill-opacity", function(d, j, a) { 
+                           return function(e) { 
+                               return (1 - e) * .9; 
+                           }})
+                       .remove();
                })
                .transition()
                .duration(500)
-               .attrTween("stroke-opacity", function(d, j, a) { 
+               .styleTween("stroke-opacity", function(d, j, a) { 
                    return function(e) { 
                        return e * .7; 
                    }});
@@ -375,14 +386,42 @@
                 .on("mousedown", function (d, j) {
                     var i = parseInt(d3.select(this.parentNode).attr("rowId"));
                     drawTrace(i, j, trace, s1, s2);
+                    var align = getAlignment(i, j, trace, s1, s2);
+                    
+                    var tooltip = d3.select("#dpmat").append("text")
+                        .attr("class", "mattooltip")
+                        .attr("x", j*30+15)
+                        .attr("y", i*30+30);
+                    tooltip.transition()
+                           .duration(500)
+                           .styleTween("fill-opacity", function(d, j, a) { 
+                               return function(e) { 
+                                   return e * .9; 
+                           }});
+                    tooltip.append("tspan")
+                        .attr("x", j*30+15)
+                        .attr("dy", ".8em")
+                        .text(align.a1);
+                    tooltip.append("tspan")
+                        .attr("x", j*30+15)
+                        .attr("dy", ".8em")
+                        .text(align.a2);
                 })
                 .on("mouseup", function (d, j) {
                     svg.selectAll("path.dptrace")
                        .transition()
                        .duration(300)
-                       .attrTween("stroke-opacity", function(d, j, a) { 
+                       .styleTween("stroke-opacity", function(d, j, a) { 
                            return function(e) { 
                                return (1 - e) * .7; 
+                           }})
+                       .remove();
+                    svg.selectAll("text.mattooltip")
+                       .transition()
+                       .duration(300)
+                       .styleTween("fill-opacity", function(d, j, a) { 
+                           return function(e) { 
+                               return (1 - e) * .9; 
                            }})
                        .remove();
                 })
